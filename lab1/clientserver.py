@@ -16,6 +16,7 @@ class Server:
     """ The server """
     _logger = logging.getLogger("vs2lab.lab1.clientserver.Server")
     _serving = True
+    _tel = {'jack': 4098, 'sape': 4139, 'guido': 4127, 'john': 4128, 'mary': 4129, 'anne': 4130}  # telephone numbers
 
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -35,7 +36,19 @@ class Server:
                     data = connection.recv(1024)  # receive data from client
                     if not data:
                         break  # stop if client stopped
-                    connection.send(data + "*".encode('ascii'))  # return sent data plus an "*"
+
+                    tokens = data.decode('ascii').split(" ")  # decode and split at whitespace
+                    if tokens[0] == "GET":
+                        name = tokens[1] if len(tokens) > 1 else ""
+                        if name in self._tel:
+                            data = str(self._tel[name]).encode('ascii')
+                        else:
+                            data = "Name not found".encode('ascii')
+                    elif tokens[0] == "GETALL":
+                        data = str(self._tel).encode('ascii')
+                    else:
+                        data = "Invalid command".encode('ascii')
+                    connection.send(data)
                 connection.close()  # close the connection
             except socket.timeout:
                 pass  # ignore timeouts
@@ -61,6 +74,17 @@ class Client:
         self.sock.close()  # close the connection
         self.logger.info("Client down.")
         return msg_out
+
+    def get(self, name=""):
+        result = self.call("GET " + name)  # call server with GET command
+        data = eval(result)  # convert string to dict
+        print(f"{name}: {data}")
+
+    def get_all(self):
+        result = self.call("GETALL") # call server with GETALL command
+        data = eval(result)  # convert string to dict
+        for name, number in data.items():
+            print(f"{name}: {number}")
 
     def close(self):
         """ Close socket """
