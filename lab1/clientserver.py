@@ -8,19 +8,23 @@ import socket
 import const_cs
 from context import lab_logging
 
-lab_logging.setup(stream_level=logging.INFO)  # init loging channels for the lab
+# init loging channels for the lab
+lab_logging.setup(stream_level=logging.INFO)
 
 # pylint: disable=logging-not-lazy, line-too-long
+
 
 class Server:
     """ The server """
     _logger = logging.getLogger("vs2lab.lab1.clientserver.Server")
     _serving = True
-    _tel = {'jack': 4098, 'sape': 4139, 'guido': 4127, 'john': 4128, 'mary': 4129, 'anne': 4130}  # telephone numbers
+    _tel = {'jack': 4098, 'sape': 4139, 'guido': 4127, 'john': 4128,
+            'mary': 4129, 'anne': 4130}  # telephone numbers
 
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # prevents errors due to "addresses in use"
+        # prevents errors due to "addresses in use"
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((const_cs.HOST, const_cs.PORT))
         self.sock.settimeout(3)  # time out in order not to block forever
         self._logger.info("Server bound to socket " + str(self.sock))
@@ -28,16 +32,19 @@ class Server:
     def serve(self):
         """ Serve echo """
         self.sock.listen(1)
-        while self._serving:  # as long as _serving (checked after connections or socket timeouts)
+        # as long as _serving (checked after connections or socket timeouts)
+        while self._serving:
             try:
                 # pylint: disable=unused-variable
-                (connection, address) = self.sock.accept()  # returns new socket and address of client
+                # returns new socket and address of client
+                (connection, address) = self.sock.accept()
                 while True:  # forever
                     data = connection.recv(1024)  # receive data from client
                     if not data:
                         break  # stop if client stopped
 
-                    tokens = data.decode('ascii').split(" ")  # decode and split at whitespace
+                    tokens = data.decode('ascii').split(
+                        " ")  # decode and split at whitespace
                     if tokens[0] == "GET":
                         name = tokens[1] if len(tokens) > 1 else ""
                         if name in self._tel:
@@ -79,12 +86,14 @@ class Client:
         result = self.call("GET " + name)  # call server with GET command
         data = eval(result)  # convert string to dict
         print(f"{name}: {data}")
+        return data
 
     def get_all(self):
-        result = self.call("GETALL") # call server with GETALL command
+        result = self.call("GETALL")  # call server with GETALL command
         data = eval(result)  # convert string to dict
         for name, number in data.items():
             print(f"{name}: {number}")
+        return data
 
     def close(self):
         """ Close socket """
