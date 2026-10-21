@@ -29,6 +29,18 @@ class Server:
         self.sock.settimeout(3)  # time out in order not to block forever
         self._logger.info("Server bound to socket " + str(self.sock))
 
+    def handle_request(self, request):
+        """ Backend: process a request string and return the response string """
+        tokens = request.split(" ")  # split at whitespace
+        if tokens[0] == "GET":
+            name = tokens[1] if len(tokens) > 1 else ""
+            if name in self._tel:
+                return str(self._tel[name])
+            return "Name not found"
+        if tokens[0] == "GETALL":
+            return str(self._tel)
+        return "Invalid command"
+
     def serve(self):
         """ Serve echo """
         self.sock.listen(1)
@@ -43,19 +55,8 @@ class Server:
                     if not data:
                         break  # stop if client stopped
 
-                    tokens = data.decode('ascii').split(
-                        " ")  # decode and split at whitespace
-                    if tokens[0] == "GET":
-                        name = tokens[1] if len(tokens) > 1 else ""
-                        if name in self._tel:
-                            data = str(self._tel[name]).encode('ascii')
-                        else:
-                            data = "Name not found".encode('ascii')
-                    elif tokens[0] == "GETALL":
-                        data = str(self._tel).encode('ascii')
-                    else:
-                        data = "Invalid command".encode('ascii')
-                    connection.send(data)
+                    response = self.handle_request(data.decode('ascii'))
+                    connection.send(response.encode('ascii'))
                 connection.close()  # close the connection
             except socket.timeout:
                 pass  # ignore timeouts
